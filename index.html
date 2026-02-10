@@ -489,9 +489,11 @@
                     if (med.day) times.push('День');
                     if (med.evening) times.push('Вечер');
 
+                    const d = new Date(med.startDate);
+
                     medItem.innerHTML = `
                         <div class="med-details">
-                            <span><strong>${med.name}</strong> - ${med.dosage} (${times.join(', ')}) на ${med.count} дней, с ${med.startDate}</span>
+                            <span><strong>${med.name}</strong> - ${med.dosage} (${times.join(', ')}) на ${med.count} дней, с ${d.toLocaleString("ru-RU", {weekday: "long", day: "numeric",  month: "long", year: "numeric"})}</span>
                             ${med.comment ? `<span class="med-comment">Комментарий: ${med.comment}</span>` : ''}
                         </div>
                         <div class="buttons-group">
