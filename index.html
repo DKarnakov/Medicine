@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💊</title>
+    <title>💊 Календарь Приема Лекарств</title>
     <style>
+        /* Universal box-sizing for better layout control */
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -45,6 +50,7 @@
             border-radius: 6px;
             margin-bottom: 15px;
             font-size: 1.5em;
+            color: #2c3e50; /* Ensure header color */
         }
         #toggleMedicationFormHeader:hover {
             background-color: #dee2e6;
@@ -69,7 +75,8 @@
         }
         .form-group input[type="text"],
         .form-group input[type="number"],
-        .form-group input[type="date"], /* Added style for date input */
+        .form-group input[type="date"],
+        .form-group textarea, /* Added style for textarea */
         .form-group select {
             width: 100%;
             padding: 12px;
@@ -77,6 +84,7 @@
             border-radius: 4px;
             box-sizing: border-box;
             font-size: 1em;
+            resize: vertical; /* Allow vertical resizing for textarea */
         }
         .dosage-times {
             display: flex;
@@ -126,6 +134,18 @@
         }
         .medication-item:last-child {
             border-bottom: none;
+        }
+        .medication-item .med-details {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 100%;
+        }
+        .medication-item .med-comment {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 5px;
+            font-style: italic;
         }
         .medication-item .buttons-group {
             display: flex;
@@ -184,7 +204,7 @@
         }
         .calendar-grid {
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
+            grid-template-columns: repeat(7, minmax(0, 1fr));
             gap: 5px;
             text-align: center;
         }
@@ -206,7 +226,6 @@
             position: relative;
             font-size: 0.9em;
             overflow: hidden;
-            /* cursor: pointer; REMOVED calendar day clickability */
         }
         .calendar-day.current-day {
             background-color: #d0efff;
@@ -303,18 +322,18 @@
                 margin: 5px 0;
             }
             .calendar-grid {
-                gap: 3px;
+                gap: 2px;
             }
             .calendar-day-header, .calendar-day {
-                font-size: 0.8em;
-                padding: 3px;
+                font-size: 0.75em;
+                padding: 2px;
             }
             .calendar-day strong {
                 font-size: 0.9em;
             }
             .medication-entry {
-                font-size: 0.75em;
-                padding: 2px;
+                font-size: 0.7em;
+                padding: 1px;
             }
         }
 
@@ -335,6 +354,16 @@
             .calendar-nav h3 {
                 margin-top: 5px;
             }
+            .calendar-grid {
+                gap: 1px;
+            }
+            .calendar-day-header, .calendar-day {
+                font-size: 0.7em;
+                padding: 1px;
+            }
+            .medication-entry {
+                font-size: 0.6em;
+            }
         }
     </style>
 </head>
@@ -342,7 +371,7 @@
     <div class="container">
         <!-- Calendar Section - First -->
         <div class="calendar-section">
-            <h2>Календарь приема лекарств</h2>
+            <h2>Календарь Приема</h2>
             <div class="calendar-nav">
                 <button id="prevMonth">← Предыдущий</button>
                 <h3 id="currentMonthYear"></h3>
@@ -370,8 +399,8 @@
 
         <!-- Collapsible Add Medication Form - Third -->
         <div class="medication-section">
-            <h2 id="toggleMedicationFormHeader">Добавить/Редактировать лекарство <span class="toggle-icon">+</span></h2>
-            <div id="medicationFormContent" class="hidden">
+            <h2 id="toggleMedicationFormHeader">Добавить лекарство <span class="toggle-icon">+</span></h2>
+            <div id="medicationFormContent" class="hidden"> <!-- Panel is hidden by default -->
                 <div class="form-group">
                     <label for="medicationName">Название лекарства:</label>
                     <input type="text" id="medicationName" placeholder="Например, Аспирин" required>
@@ -396,6 +425,10 @@
                     <label for="dosageCount">Количество приемов (дней):</label>
                     <input type="number" id="dosageCount" min="1" value="7" step="1" required>
                 </div>
+                <div class="form-group">
+                    <label for="medicationComment">Комментарий:</label>
+                    <textarea id="medicationComment" rows="3" placeholder="Дополнительная информация (например, до еды)"></textarea>
+                </div>
                 <button id="submitMedicationBtn">Добавить лекарство</button>
             </div>
         </div>
@@ -408,8 +441,9 @@
             const timeMorningCheckbox = document.getElementById('timeMorning');
             const timeDayCheckbox = document.getElementById('timeDay');
             const timeEveningCheckbox = document.getElementById('timeEvening');
-            const startDateInput = document.getElementById('startDate'); // New input
+            const startDateInput = document.getElementById('startDate');
             const dosageCountInput = document.getElementById('dosageCount');
+            const medicationCommentInput = document.getElementById('medicationComment'); // New comment input
             const submitMedicationBtn = document.getElementById('submitMedicationBtn');
             const currentMedicationsDiv = document.getElementById('currentMedications');
             const medicationCalendarDiv = document.getElementById('medicationCalendar');
@@ -448,10 +482,12 @@
                     if (med.morning) times.push('Утро');
                     if (med.day) times.push('День');
                     if (med.evening) times.push('Вечер');
-					
-					const d = new Date(med.startDate);
+
                     medItem.innerHTML = `
-                        <span><strong>${med.name}</strong> - ${med.dosage} (${times.join(', ')}) на ${med.count} дней, с ${d.toLocaleString('ru-RU', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</span>
+                        <div class="med-details">
+                            <span><strong>${med.name}</strong> - ${med.dosage} (${times.join(', ')}) на ${med.count} дней, с ${med.startDate}</span>
+                            ${med.comment ? `<span class="med-comment">Комментарий: ${med.comment}</span>` : ''}
+                        </div>
                         <div class="buttons-group">
                             <button class="edit-btn" data-id="${med.id}">Редактировать</button>
                             <button class="delete-btn" data-id="${med.id}">Удалить</button>
@@ -479,7 +515,6 @@
                 medications = medications.filter(med => med.id !== medId);
                 saveMedications();
 
-                // Remove from schedule as well (remove all instances of this medId)
                 for (const dateKey in medicationSchedule) {
                     if (medicationSchedule.hasOwnProperty(dateKey)) {
                         for (const timeOfDay in medicationSchedule[dateKey]) {
@@ -489,7 +524,6 @@
                                 );
                             }
                         }
-                        // Clean up empty timeOfDay arrays
                         if (medicationSchedule[dateKey].morning.length === 0 &&
                             medicationSchedule[dateKey].day.length === 0 &&
                             medicationSchedule[dateKey].evening.length === 0) {
@@ -513,13 +547,15 @@
                 timeMorningCheckbox.checked = medToEdit.morning;
                 timeDayCheckbox.checked = medToEdit.day;
                 timeEveningCheckbox.checked = medToEdit.evening;
-                startDateInput.value = medToEdit.startDate; // Pre-fill start date
+                startDateInput.value = medToEdit.startDate;
                 dosageCountInput.value = medToEdit.count;
+                medicationCommentInput.value = medToEdit.comment || ''; // Pre-fill comment
 
-                // Set editing state
+                // Set editing state and change header text
                 editingMedicationId = medId;
                 submitMedicationBtn.textContent = 'Обновить лекарство';
-
+                toggleMedicationFormHeader.childNodes[0].nodeValue = 'Редактировать лекарство '; // Update text node
+                
                 // Open the collapsible panel if it's hidden
                 if (medicationFormContent.classList.contains('hidden')) {
                     medicationFormContent.classList.remove('hidden');
@@ -533,10 +569,25 @@
                 timeMorningCheckbox.checked = false;
                 timeDayCheckbox.checked = false;
                 timeEveningCheckbox.checked = false;
-                startDateInput.value = ''; // Clear start date
+                
+                // Set default start date to today
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                const day = today.getDate().toString().padStart(2, '0');
+                startDateInput.value = `${year}-${month}-${day}`;
+                
                 dosageCountInput.value = '7';
+                medicationCommentInput.value = ''; // Clear comment
                 editingMedicationId = null;
                 submitMedicationBtn.textContent = 'Добавить лекарство';
+                
+                // Reset header text and collapse panel
+                toggleMedicationFormHeader.childNodes[0].nodeValue = 'Добавить лекарство ';
+                if (!medicationFormContent.classList.contains('hidden')) {
+                    medicationFormContent.classList.add('hidden');
+                    toggleIcon.textContent = '+';
+                }
             }
 
 
@@ -546,8 +597,9 @@
                 const morning = timeMorningCheckbox.checked;
                 const day = timeDayCheckbox.checked;
                 const evening = timeEveningCheckbox.checked;
-                const startDate = startDateInput.value; // Get start date
+                const startDate = startDateInput.value;
                 const count = parseInt(dosageCountInput.value, 10);
+                const comment = medicationCommentInput.value.trim(); // Get comment
 
                 if (!name || !dosage || (!morning && !day && !evening) || !startDate || !count || count <= 0) {
                     alert('Пожалуйста, заполните все поля (включая дату начала) и выберите хотя бы одно время приема.');
@@ -555,7 +607,6 @@
                 }
 
                 if (editingMedicationId) {
-                    // Update existing medication
                     const medIndex = medications.findIndex(med => med.id === editingMedicationId);
                     if (medIndex !== -1) {
                         const updatedMed = {
@@ -566,15 +617,14 @@
                             day,
                             evening,
                             count,
-                            startDate // Store start date
+                            startDate,
+                            comment // Store comment
                         };
                         medications[medIndex] = updatedMed;
-                        // To update schedule correctly, remove old entries and re-add new ones
                         removeMedicationFromSchedule(editingMedicationId);
                         addMedicationToSchedule(updatedMed);
                     }
                 } else {
-                    // Add new medication
                     const newMedication = {
                         id: Date.now(),
                         name,
@@ -583,7 +633,8 @@
                         day,
                         evening,
                         count,
-                        startDate // Store start date
+                        startDate,
+                        comment // Store comment
                     };
                     medications.push(newMedication);
                     addMedicationToSchedule(newMedication);
@@ -591,8 +642,8 @@
 
                 saveMedications();
                 renderMedicationList();
-                renderCalendar(currentCalendarDate);
-                resetForm(); // Clear form and reset button text
+                rebuildSchedule();
+                resetForm();
             });
 
             function removeMedicationFromSchedule(medId) {
@@ -605,7 +656,6 @@
                                 );
                             }
                         }
-                        // Clean up empty timeOfDay arrays and dateKey if all are empty
                         if (medicationSchedule[dateKey].morning.length === 0 &&
                             medicationSchedule[dateKey].day.length === 0 &&
                             medicationSchedule[dateKey].evening.length === 0) {
@@ -614,15 +664,14 @@
                     }
                 }
             }
-
-
-            // Simplified addMedicationToSchedule, now always uses med.startDate and med.count
+            
             function addMedicationToSchedule(med) {
-                const start = new Date(med.startDate + 'T00:00:00'); // Use 'T00:00:00' to force local time interpretation
-                // This ensures date interpretation consistent with user's local timezone.
-                // Alternative: new Date(med.startDate); if med.startDate is already YYYY-MM-DD
-                // current version of med.startDate is already YYYY-MM-DD string, so new Date(med.startDate) should also work.
-                // Added T00:00:00 to be explicit about time to avoid timezone issues.
+                const parts = med.startDate.split('-');
+                const startYear = parseInt(parts[0], 10);
+                const startMonth = parseInt(parts[1], 10) - 1;
+                const startDay = parseInt(parts[2], 10);
+                const start = new Date(startYear, startMonth, startDay);
+                start.setHours(0, 0, 0, 0);
 
                 for (let i = 0; i < med.count; i++) {
                     const date = new Date(start);
@@ -654,9 +703,8 @@
                 saveMedicationSchedule();
             }
 
-            // Function to re-build the entire schedule from stored medications
             function rebuildSchedule() {
-                medicationSchedule = {}; // Clear existing schedule
+                medicationSchedule = {};
                 medications.forEach(med => addMedicationToSchedule(med));
                 saveMedicationSchedule();
                 renderCalendar(currentCalendarDate);
@@ -734,7 +782,6 @@
                 }
 
                 addCheckboxListeners();
-                // Removed addCalendarDayClickListeners();
             }
 
             function getTimeLabel(timeOfDay) {
@@ -766,10 +813,6 @@
                 });
             }
 
-            // Removed openDayEditModal, renderModalMedications, removeMedicationInstance,
-            // populateModalAddMedicationSelect, modalAddMedicationBtn event listener,
-            // modalCloseBtn event listener, window click listener for modal
-
             // --- Navigation buttons ---
             prevMonthBtn.addEventListener('click', () => {
                 currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
@@ -786,6 +829,7 @@
                 medicationFormContent.classList.toggle('hidden');
                 if (medicationFormContent.classList.contains('hidden')) {
                     toggleIcon.textContent = '+';
+                    toggleMedicationFormHeader.childNodes[0].nodeValue = 'Добавить лекарство '; // Reset text
                 } else {
                     toggleIcon.textContent = '-';
                 }
@@ -801,7 +845,7 @@
 
             // Initial render
             renderMedicationList();
-            rebuildSchedule(); // Rebuild schedule based on stored medications to reflect changes
+            rebuildSchedule();
         });
     </script>
 </body>
