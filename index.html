@@ -75,14 +75,8 @@
         }
         .form-group input[type="text"],
         .form-group input[type="number"],
-        .form-group input[type="date"] {
-           width: 100%;
-           max-width: 100%;
-        }
-        .form-group textarea{
-           width: 100%;
-           max-width: 100%;
-        }
+        .form-group input[type="date"],
+        .form-group textarea,
         .form-group select {
             width: 100%;
             padding: 12px;
@@ -429,11 +423,11 @@
                 </div>
                 <div class="form-group">
                     <label for="dosageCount">Количество приемов (дней):</label>
-                    <input type="number" id="dosageCount" min="1" value="7" step="1" pattern="[0-9]*" required>
+                    <input type="number" id="dosageCount" min="1" value="7" step="1" pattern="[0-9]*" style="width: 100%" required>
                 </div>
                 <div class="form-group">
                     <label for="medicationComment">Комментарий:</label>
-                    <textarea id="medicationComment" rows="3" placeholder="Дополнительная информация (например, до еды)"></textarea>
+                    <textarea id="medicationComment" rows="3" placeholder="Дополнительная информация (например, до еды)" style="width: 100%"></textarea>
                 </div>
                 <button id="submitMedicationBtn">Добавить лекарство</button>
             </div>
