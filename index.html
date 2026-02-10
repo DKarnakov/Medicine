@@ -1064,6 +1064,7 @@
                                 daySchedule[timeOfDay].forEach(med => {
                                     const medEntry = document.createElement('div');
                                     medEntry.classList.add('medication-entry', timeOfDay);
+                                    medEntry.style.display="block";
                                     if (med.taken) {
                                         medEntry.classList.add('taken');
                                     }
