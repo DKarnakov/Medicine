@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💊 Календарь Приема Лекарств</title>
+    <title>💊</title>
     <style>
         /* Universal box-sizing for better layout control */
         * {
@@ -75,7 +75,12 @@
         }
         .form-group input[type="text"],
         .form-group input[type="number"],
-        .form-group input[type="date"],
+        .form-group input[type="date"] {
+           -webkit-appearance: none; /* Отключает стандартный вид iOS */
+           appearance: none;
+           width: 100%;
+           max-width: 100%;
+        },
         .form-group textarea, /* Added style for textarea */
         .form-group select {
             width: 100%;
@@ -371,7 +376,7 @@
     <div class="container">
         <!-- Calendar Section - First -->
         <div class="calendar-section">
-            <h2>Календарь Приема</h2>
+            <h2>Календарь приема лекарств</h2>
             <div class="calendar-nav">
                 <button id="prevMonth">← Предыдущий</button>
                 <h3 id="currentMonthYear"></h3>
@@ -423,7 +428,7 @@
                 </div>
                 <div class="form-group">
                     <label for="dosageCount">Количество приемов (дней):</label>
-                    <input type="number" id="dosageCount" min="1" value="7" step="1" required>
+                    <input type="number" id="dosageCount" min="1" value="7" step="1" pattern="[0-9]" required>
                 </div>
                 <div class="form-group">
                     <label for="medicationComment">Комментарий:</label>
