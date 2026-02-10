@@ -1170,7 +1170,7 @@
                 
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                
+                date.setHours(0, 0, 0, 0); 
                 dayCalendar.classList.remove('current-day');
                 if (date.getTime() === today.getTime()) {
                     dayCalendar.classList.add('current-day');
