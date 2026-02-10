@@ -25,12 +25,48 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        h2 {
-            color: #2c3e50;
-            text-align: center;
+        
+        /* Стили для заголовка и селектора */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
-            font-size: 1.5em;
+            flex-wrap: nowrap; /* Изменено с wrap на nowrap */
+            gap: 15px;
         }
+        
+        .calendar-header h2 {
+            margin: 0;
+            flex-grow: 1;
+            text-align: left;
+            white-space: nowrap;
+        }
+        
+        .view-mode-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        
+        .view-mode-selector select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 0.95em;
+            cursor: pointer;
+            min-width: 120px;
+            flex-shrink: 0;
+        }
+        
+        .view-mode-selector select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        
         .medication-section, .calendar-section, .medication-list-section {
             margin-bottom: 30px;
             padding: 15px;
@@ -202,6 +238,11 @@
             text-align: center;
             margin: 5px;
         }
+        
+        .calendar-container {
+            margin-top: 10px;
+        }
+        
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -239,6 +280,61 @@
             color: #495057;
             text-align: center;
         }
+        
+        /* Стили для недельного вида */
+        .calendar-week-view {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .week-day {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 10px;
+            background-color: #fafafa;
+        }
+
+        .week-day.current-day {
+            background-color: #d0efff;
+            border-color: #8ccdfa;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+
+        .week-day-header {
+            font-weight: bold;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            font-size: 1.1em;
+            color: #2c3e50;
+        }
+
+        /* Стили для дневного вида */
+        .calendar-day-view {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            background-color: #fafafa;
+        }
+
+        .calendar-day-view.current-day {
+            background-color: #d0efff;
+            border-color: #8ccdfa;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+
+        .day-header {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            color: #2c3e50;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        /* Обновленные стили для medication-entry - делаем весь блок кликабельным */
         .medication-entry {
             border: 1px solid;
             border-radius: 3px;
@@ -248,7 +344,55 @@
             display: flex;
             align-items: center;
             word-break: break-word;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            position: relative;
         }
+        
+        .medication-entry:hover {
+            filter: brightness(0.95);
+        }
+        
+        /* Скрываем стандартный чекбокс */
+        .medication-entry input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            margin: 0;
+        }
+        
+        /* Создаем кастомный чекбокс */
+        .medication-entry .custom-checkbox {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            min-height: 18px;
+            border: 2px solid #6c757d;
+            border-radius: 3px;
+            margin-right: 8px;
+            position: relative;
+            background-color: white;
+            transition: all 0.2s ease;
+        }
+        
+        .medication-entry input[type="checkbox"]:checked + .custom-checkbox {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        
+        .medication-entry input[type="checkbox"]:checked + .custom-checkbox::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
         /* Color-coding for medication entries */
         .medication-entry.morning {
             background-color: #d1ecf1;
@@ -277,21 +421,28 @@
             background-color: #f1c3c9;
         }
 
-        .medication-entry input[type="checkbox"] {
-            margin-right: 5px;
-            transform: scale(1.1);
-            min-width: 18px;
-            min-height: 18px;
-        }
-
         /* Media Queries for smaller screens */
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
             }
-            h2 {
-                font-size: 1.3em;
+            
+            .calendar-header {
+                flex-wrap: nowrap; /* Оставляем в одной строке */
             }
+            
+            .calendar-header h2 {
+                font-size: 1.1em;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            
+            .view-mode-selector select {
+                min-width: 100px;
+                font-size: 0.9em;
+                padding: 6px 8px;
+            }
+            
             #toggleMedicationFormHeader {
                 font-size: 1.3em;
             }
@@ -335,24 +486,56 @@
                 font-size: 0.8em;
                 padding: 1px;
             }
+            
+            .week-day-header {
+                font-size: 1em;
+            }
+            
+            .day-header {
+                font-size: 1.1em;
+            }
         }
 
         @media (max-width: 420px) {
             .container {
                 padding: 10px;
             }
-            h2 {
-                font-size: 1.2em;
+            
+            .calendar-header {
+                flex-wrap: nowrap; /* Оставляем в одной строке даже на 420px */
+                gap: 8px;
             }
+            
+            .calendar-header h2 {
+                font-size: 1.1em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                flex-shrink: 1;
+            }
+            
+            .view-mode-selector {
+                flex-shrink: 0;
+            }
+            
+            .view-mode-selector select {
+                min-width: 80px;
+                font-size: 0.8em;
+                padding: 5px 6px;
+            }
+            
             #toggleMedicationFormHeader {
                 font-size: 1.2em;
             }
             .calendar-nav button {
                 width: 100%;
                 margin: 5px 0;
+                font-size: 0.9em;
+                padding: 8px 10px;
             }
             .calendar-nav h3 {
                 margin-top: 5px;
+                font-size: 0.95em;
             }
             .calendar-grid {
                 gap: 1px;
@@ -363,6 +546,43 @@
             }
             .medication-entry {
                 font-size: 0.6em;
+                padding: 1px;
+            }
+            
+            .medication-entry .custom-checkbox {
+                width: 16px;
+                height: 16px;
+                min-width: 16px;
+                min-height: 16px;
+                margin-right: 6px;
+            }
+            
+            .medication-entry input[type="checkbox"]:checked + .custom-checkbox::after {
+                font-size: 10px;
+            }
+        }
+        
+        /* Дополнительный брейкпоинт для очень маленьких экранов */
+        @media (max-width: 360px) {
+            .calendar-header {
+                flex-wrap: wrap; /* Только на очень маленьких экранах переносим */
+                gap: 10px;
+            }
+            
+            .calendar-header h2 {
+                width: 100%;
+                text-align: center;
+                font-size: 1.2em;
+            }
+            
+            .view-mode-selector {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .view-mode-selector select {
+                min-width: 120px;
+                font-size: 0.9em;
             }
         }
     </style>
@@ -371,21 +591,47 @@
     <div class="container">
         <!-- Calendar Section - First -->
         <div class="calendar-section">
-            <h2>Календарь приема лекарств</h2>
-            <div class="calendar-nav">
-                <button id="prevMonth">← Предыдущий</button>
-                <h3 id="currentMonthYear"></h3>
-                <button id="nextMonth">Следующий →</button>
+            <div class="calendar-header">
+                <h2>Календарь приема лекарств</h2>
+                <div class="view-mode-selector">
+                    <select id="calendarViewMode">
+                        <option value="month">Месяц</option>
+                        <option value="week">Неделя</option>
+                        <option value="day">День</option>
+                    </select>
+                </div>
             </div>
-            <div class="calendar-grid" id="medicationCalendar">
-                <div class="calendar-day-header">ПН</div>
-                <div class="calendar-day-header">ВТ</div>
-                <div class="calendar-day-header">СР</div>
-                <div class="calendar-day-header">ЧТ</div>
-                <div class="calendar-day-header">ПТ</div>
-                <div class="calendar-day-header">СБ</div>
-                <div class="calendar-day-header">ВС</div>
-                <!-- Calendar days will be generated here -->
+            
+            <div class="calendar-nav">
+                <button id="prevPeriod">← Предыдущий</button>
+                <h3 id="currentPeriod"></h3>
+                <button id="nextPeriod">Следующий →</button>
+            </div>
+            
+            <!-- Контейнеры для разных режимов -->
+            <div id="monthView" class="calendar-container">
+                <div class="calendar-grid" id="medicationCalendar">
+                    <div class="calendar-day-header">ПН</div>
+                    <div class="calendar-day-header">ВТ</div>
+                    <div class="calendar-day-header">СР</div>
+                    <div class="calendar-day-header">ЧТ</div>
+                    <div class="calendar-day-header">ПТ</div>
+                    <div class="calendar-day-header">СБ</div>
+                    <div class="calendar-day-header">ВС</div>
+                    <!-- Calendar days will be generated here -->
+                </div>
+            </div>
+            
+            <div id="weekView" class="calendar-container" style="display: none;">
+                <div class="calendar-week-view" id="weekCalendar">
+                    <!-- Week view will be generated here -->
+                </div>
+            </div>
+            
+            <div id="dayView" class="calendar-container" style="display: none;">
+                <div class="calendar-day-view" id="dayCalendar">
+                    <!-- Day view will be generated here -->
+                </div>
             </div>
         </div>
 
@@ -447,9 +693,17 @@
             const submitMedicationBtn = document.getElementById('submitMedicationBtn');
             const currentMedicationsDiv = document.getElementById('currentMedications');
             const medicationCalendarDiv = document.getElementById('medicationCalendar');
-            const currentMonthYearHeader = document.getElementById('currentMonthYear');
-            const prevMonthBtn = document.getElementById('prevMonth');
-            const nextMonthBtn = document.getElementById('nextMonth');
+            
+            // Новые переменные для режимов календаря
+            const monthView = document.getElementById('monthView');
+            const weekView = document.getElementById('weekView');
+            const dayView = document.getElementById('dayView');
+            const weekCalendar = document.getElementById('weekCalendar');
+            const dayCalendar = document.getElementById('dayCalendar');
+            const calendarViewModeSelect = document.getElementById('calendarViewMode');
+            const currentPeriodHeader = document.getElementById('currentPeriod');
+            const prevPeriodBtn = document.getElementById('prevPeriod');
+            const nextPeriodBtn = document.getElementById('nextPeriod');
 
             // Elements for collapsible form
             const toggleMedicationFormHeader = document.getElementById('toggleMedicationFormHeader');
@@ -460,6 +714,7 @@
             let medicationSchedule = JSON.parse(localStorage.getItem('medicationSchedule')) || {};
             let currentCalendarDate = new Date();
             let editingMedicationId = null;
+            let currentViewMode = 'month'; // 'month', 'week', 'day'
 
             function saveMedications() {
                 localStorage.setItem('medications', JSON.stringify(medications));
@@ -535,7 +790,7 @@
                 }
                 saveMedicationSchedule();
                 renderMedicationList();
-                renderCalendar(currentCalendarDate);
+                updateCalendarDisplay();
                 resetForm(); // Reset form if deleted the one being edited
             }
 
@@ -709,11 +964,55 @@
                 medicationSchedule = {};
                 medications.forEach(med => addMedicationToSchedule(med));
                 saveMedicationSchedule();
-                renderCalendar(currentCalendarDate);
+                updateCalendarDisplay();
             }
 
-
-            function renderCalendar(date) {
+            // Функция переключения режима просмотра
+            function switchViewMode(mode) {
+                currentViewMode = mode;
+                
+                // Установить значение в селекторе
+                calendarViewModeSelect.value = mode;
+                
+                // Скрыть все представления
+                monthView.style.display = 'none';
+                weekView.style.display = 'none';
+                dayView.style.display = 'none';
+                
+                // Показать выбранное представление
+                switch(mode) {
+                    case 'month':
+                        monthView.style.display = 'block';
+                        break;
+                    case 'week':
+                        weekView.style.display = 'block';
+                        break;
+                    case 'day':
+                        dayView.style.display = 'block';
+                        break;
+                }
+                
+                // Обновить отображение
+                updateCalendarDisplay();
+            }
+            
+            // Функция обновления отображения календаря
+            function updateCalendarDisplay() {
+                switch(currentViewMode) {
+                    case 'month':
+                        renderMonthView(currentCalendarDate);
+                        break;
+                    case 'week':
+                        renderWeekView(currentCalendarDate);
+                        break;
+                    case 'day':
+                        renderDayView(currentCalendarDate);
+                        break;
+                }
+            }
+            
+            // Существующая функция рендеринга месяца (переименована)
+            function renderMonthView(date) {
                 medicationCalendarDiv.innerHTML = `
                     <div class="calendar-day-header">ПН</div>
                     <div class="calendar-day-header">ВТ</div>
@@ -726,7 +1025,7 @@
 
                 const year = date.getFullYear();
                 const month = date.getMonth();
-                currentMonthYearHeader.textContent = `${date.toLocaleString('ru', { month: 'long', year: 'numeric' })}`;
+                currentPeriodHeader.textContent = `${date.toLocaleString('ru', { month: 'long', year: 'numeric' })}`;
 
                 const firstDayOfMonth = new Date(year, month, 1);
                 const lastDayOfMonth = new Date(year, month + 1, 0);
@@ -769,10 +1068,9 @@
                                         medEntry.classList.add('taken');
                                     }
                                     medEntry.innerHTML = `
-                                        <label>
-                                            <input type="checkbox" data-date="${dateKey}" data-id="${med.id}" data-time="${timeOfDay}" ${med.taken ? 'checked' : ''}>
-                                            <span>${med.name} (${med.dosage})</span>
-                                        </label>
+                                        <input type="checkbox" data-date="${dateKey}" data-id="${med.id}" data-time="${timeOfDay}" ${med.taken ? 'checked' : ''}>
+                                        <span class="custom-checkbox"></span>
+                                        <span>${med.name} (${med.dosage})</span>
                                     `;
                                     timeDiv.appendChild(medEntry);
                                 });
@@ -785,7 +1083,135 @@
 
                 addCheckboxListeners();
             }
-
+            
+            // Новая функция для отображения недели
+            function renderWeekView(date) {
+                weekCalendar.innerHTML = '';
+                
+                // Получаем начало недели (понедельник)
+                const startOfWeek = new Date(date);
+                const dayOfWeek = startOfWeek.getDay();
+                const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Если воскресенье, отнимаем 6 дней
+                startOfWeek.setDate(startOfWeek.getDate() + diff);
+                startOfWeek.setHours(0, 0, 0, 0);
+                
+                // Получаем конец недели
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(endOfWeek.getDate() + 6);
+                
+                currentPeriodHeader.textContent = `Неделя ${startOfWeek.getDate()}-${endOfWeek.getDate()} ${startOfWeek.toLocaleString('ru', { month: 'long' })} ${startOfWeek.getFullYear()}`;
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                // Отображаем каждый день недели
+                for (let i = 0; i < 7; i++) {
+                    const currentDay = new Date(startOfWeek);
+                    currentDay.setDate(startOfWeek.getDate() + i);
+                    const dateKey = currentDay.toISOString().split('T')[0];
+                    
+                    const dayDiv = document.createElement('div');
+                    dayDiv.classList.add('week-day');
+                    
+                    if (currentDay.getTime() === today.getTime()) {
+                        dayDiv.classList.add('current-day');
+                    }
+                    
+                    const dayNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
+                    dayDiv.innerHTML = `
+                        <div class="week-day-header">
+                            ${dayNames[i]}, ${currentDay.getDate()} ${currentDay.toLocaleString('ru', { month: 'short' })}
+                        </div>
+                    `;
+                    
+                    const daySchedule = medicationSchedule[dateKey];
+                    if (daySchedule) {
+                        ['morning', 'day', 'evening'].forEach(timeOfDay => {
+                            if (daySchedule[timeOfDay] && daySchedule[timeOfDay].length > 0) {
+                                const timeDiv = document.createElement('div');
+                                timeDiv.innerHTML += `<em>${getTimeLabel(timeOfDay)}:</em>`;
+                                daySchedule[timeOfDay].forEach(med => {
+                                    const medEntry = document.createElement('div');
+                                    medEntry.classList.add('medication-entry', timeOfDay);
+                                    if (med.taken) {
+                                        medEntry.classList.add('taken');
+                                    }
+                                    medEntry.innerHTML = `
+                                        <input type="checkbox" data-date="${dateKey}" data-id="${med.id}" data-time="${timeOfDay}" ${med.taken ? 'checked' : ''}>
+                                        <span class="custom-checkbox"></span>
+                                        <span>${med.name} (${med.dosage})</span>
+                                    `;
+                                    timeDiv.appendChild(medEntry);
+                                });
+                                dayDiv.appendChild(timeDiv);
+                            }
+                        });
+                    } else {
+                        dayDiv.innerHTML += '<p>На этот день лекарств не назначено</p>';
+                    }
+                    
+                    weekCalendar.appendChild(dayDiv);
+                }
+                
+                addCheckboxListeners();
+            }
+            
+            // Новая функция для отображения дня
+            function renderDayView(date) {
+                dayCalendar.innerHTML = '';
+                
+                const dateKey = date.toISOString().split('T')[0];
+                
+                const dayNames = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+                const dayName = dayNames[date.getDay()];
+                
+                currentPeriodHeader.textContent = `${dayName}, ${date.getDate()} ${date.toLocaleString('ru', { month: 'long', year: 'numeric' })}`;
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                dayCalendar.classList.remove('current-day');
+                if (date.getTime() === today.getTime()) {
+                    dayCalendar.classList.add('current-day');
+                }
+                
+                const daySchedule = medicationSchedule[dateKey];
+                if (daySchedule) {
+                    let hasMedications = false;
+                    
+                    ['morning', 'day', 'evening'].forEach(timeOfDay => {
+                        if (daySchedule[timeOfDay] && daySchedule[timeOfDay].length > 0) {
+                            hasMedications = true;
+                            const timeDiv = document.createElement('div');
+                            timeDiv.innerHTML += `<em>${getTimeLabel(timeOfDay)}</em>`;
+                            daySchedule[timeOfDay].forEach(med => {
+                                const medEntry = document.createElement('div');
+                                medEntry.classList.add('medication-entry', timeOfDay);
+                                if (med.taken) {
+                                    medEntry.classList.add('taken');
+                                }
+                                medEntry.innerHTML = `
+                                    <input type="checkbox" data-date="${dateKey}" data-id="${med.id}" data-time="${timeOfDay}" ${med.taken ? 'checked' : ''}>
+                                    <span class="custom-checkbox"></span>
+                                    <span><strong>${med.name}</strong> - ${med.dosage}</span>
+                                `;
+                                timeDiv.appendChild(medEntry);
+                            });
+                            dayCalendar.appendChild(timeDiv);
+                        }
+                    });
+                    
+                    if (!hasMedications) {
+                        dayCalendar.innerHTML += '<p>На этот день лекарств не назначено</p>';
+                    }
+                } else {
+                    dayCalendar.innerHTML += '<p>На этот день лекарств не назначено</p>';
+                }
+                
+                addCheckboxListeners();
+            }
+            
+            // Функция для получения метки времени
             function getTimeLabel(timeOfDay) {
                 switch (timeOfDay) {
                     case 'morning': return 'Утро';
@@ -794,9 +1220,28 @@
                     default: return '';
                 }
             }
-
+            
+            // Функция для добавления обработчиков чекбоксов
             function addCheckboxListeners() {
-                medicationCalendarDiv.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                document.querySelectorAll('.medication-entry').forEach(entry => {
+                    entry.addEventListener('click', (e) => {
+                        // Проверяем, что клик был не на кнопке или другом интерактивном элементе
+                        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.closest('button') || e.target.closest('a')) {
+                            return;
+                        }
+                        
+                        const checkbox = entry.querySelector('input[type="checkbox"]');
+                        if (checkbox) {
+                            checkbox.checked = !checkbox.checked;
+                            
+                            // Триггерим событие change
+                            const event = new Event('change', { bubbles: true });
+                            checkbox.dispatchEvent(event);
+                        }
+                    });
+                });
+                
+                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                     checkbox.addEventListener('change', (e) => {
                         const dateKey = e.target.dataset.date;
                         const medId = parseInt(e.target.dataset.id, 10);
@@ -814,16 +1259,41 @@
                     });
                 });
             }
-
-            // --- Navigation buttons ---
-            prevMonthBtn.addEventListener('click', () => {
-                currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
-                renderCalendar(currentCalendarDate);
+            
+            // Обработчик для селектора режима просмотра
+            calendarViewModeSelect.addEventListener('change', () => {
+                switchViewMode(calendarViewModeSelect.value);
+            });
+            
+            // Обработчики для навигации
+            prevPeriodBtn.addEventListener('click', () => {
+                switch(currentViewMode) {
+                    case 'month':
+                        currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+                        break;
+                    case 'week':
+                        currentCalendarDate.setDate(currentCalendarDate.getDate() - 7);
+                        break;
+                    case 'day':
+                        currentCalendarDate.setDate(currentCalendarDate.getDate() - 1);
+                        break;
+                }
+                updateCalendarDisplay();
             });
 
-            nextMonthBtn.addEventListener('click', () => {
-                currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
-                renderCalendar(currentCalendarDate);
+            nextPeriodBtn.addEventListener('click', () => {
+                switch(currentViewMode) {
+                    case 'month':
+                        currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+                        break;
+                    case 'week':
+                        currentCalendarDate.setDate(currentCalendarDate.getDate() + 7);
+                        break;
+                    case 'day':
+                        currentCalendarDate.setDate(currentCalendarDate.getDate() + 1);
+                        break;
+                }
+                updateCalendarDisplay();
             });
 
             // --- Collapsible form logic ---
@@ -848,6 +1318,7 @@
             // Initial render
             renderMedicationList();
             rebuildSchedule();
+            switchViewMode('month'); // Инициализация режима месяца
         });
     </script>
 </body>
