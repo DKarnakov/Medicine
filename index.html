@@ -548,6 +548,10 @@
 			.frequency-group input[type="number"] {
 				width: 100%;
 			}
+			
+			.frequency-group span{
+                width: 100%;
+            }
         }
 
         @media (max-width: 420px) {
@@ -620,7 +624,7 @@
                 align-items: stretch;
             }
             
-            .frequency-group input[type="number"] {
+            .frequency-group input[type="number"]{
                 width: 100%;
             }
         }
@@ -738,10 +742,13 @@
 							<select id="frequencyType">
 								<option value="daily">Каждый день</option>
 								<option value="everyOtherDay">Через день</option>
-								<option value="everyNDays">Раз в несколько дней</option>
+								<option value="everyNDays">Каждые...</option>
 								<option value="weekly">Раз в неделю</option>
 							</select>
-							<input type="number" id="frequencyN" min="1" value="2" pattern="[0-9]*" placeholder="n" style="display: none;">
+							<span id="frequency" style="display: none; justify-content: center; align-items: center">
+							<input type="number" id="frequencyN" min="1" value="3" pattern="[0-9]*">
+							<span style="width:Initial; padding-left: 5px;" id="frequencySuff">дня</span>
+							</span>
 						</div>
 					</div>
 				</div>
@@ -790,12 +797,19 @@
             let currentCalendarDate = new Date();
             let editingMedicationId = null;
             let currentViewMode = 'day';
+			
+			document.getElementById("frequencyN").addEventListener("input", function(e) {
+				const Sfx = getPlural(event.target.value, ['день','дня','дней']);
+				document.getElementById('frequencySuff').textContent = Sfx;
+				}
+			);
 
             function toggleFrequencyNField() {
+				const frequencyInput = document.getElementById('frequency');
                 if (frequencyTypeSelect.value === 'everyNDays') {
-                    frequencyNInput.style.display = 'block';
+                    frequencyInput.style.display = 'flex';
                 } else {
-                    frequencyNInput.style.display = 'none';
+                    frequencyInput.style.display = 'none';
                 }
             }
             
@@ -810,7 +824,6 @@
                 localStorage.setItem('medicationSchedule', JSON.stringify(medicationSchedule));
             }
 
-            // ИСПРАВЛЕНО: Функция для расчета дат приема на основе периодичности и количества приемов
             function getMedicationDates(startDate, count, frequencyType, frequencyN) {
                 const dates = [];
                 const start = new Date(startDate);
