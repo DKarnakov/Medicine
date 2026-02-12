@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💊 Календарь лекарств</title>
+    <title>💊</title>
     <style>
         * {
             box-sizing: border-box;
@@ -189,6 +189,12 @@
             padding: 10px 0;
             border-bottom: 1px dotted #eee;
             gap: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            position: relative;
+        }
+        .medication-item:hover {
+            background-color: #f8f9fa;
         }
         .medication-item:last-child {
             border-bottom: none;
@@ -204,12 +210,36 @@
             margin-top: 3px;
             font-weight: 500;
         }
+        
+        /* Скрываем кнопки по умолчанию */
         .medication-item .buttons-group {
-            display: flex;
+            display: none;
             gap: 10px;
             width: 100%;
             justify-content: flex-end;
+            margin-top: 10px;
+            
+            /* Анимация появления */
+            animation: fadeIn 0.3s ease-in-out;
         }
+        
+        /* Показываем кнопки при активном состоянии */
+        .medication-item.active .buttons-group {
+            display: flex;
+        }
+        
+        /* Анимация плавного появления */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
         .medication-item button {
             width: auto;
             padding: 8px 15px;
@@ -887,15 +917,45 @@
                 }
             }
 
+            // Функция для закрытия всех открытых карточек лекарств
+            function closeAllActiveMedicationItems() {
+                document.querySelectorAll('.medication-item.active').forEach(item => {
+                    item.classList.remove('active');
+                });
+            }
+
+            // Функция для обработки клика по лекарству
+            function handleMedicationItemClick(e) {
+                // Если клик был по кнопке внутри карточки, не закрываем
+                if (e.target.closest('button')) {
+                    return;
+                }
+                
+                const medItem = e.currentTarget;
+                
+                // Закрываем все другие открытые карточки
+                document.querySelectorAll('.medication-item.active').forEach(item => {
+                    if (item !== medItem) {
+                        item.classList.remove('active');
+                    }
+                });
+                
+                // Переключаем класс active на текущей карточке
+                medItem.classList.toggle('active');
+            }
+
             function renderMedicationList() {
                 currentMedicationsDiv.innerHTML = '';
                 if (medications.length === 0) {
                     currentMedicationsDiv.innerHTML = '<p>Пока нет добавленных лекарств.</p>';
                     return;
                 }
+                
                 medications.forEach((med) => {
                     const medItem = document.createElement('div');
                     medItem.classList.add('medication-item');
+                    medItem.dataset.medId = med.id;
+                    
                     const times = [];
                     if (med.morning) times.push('утром');
                     if (med.day) times.push('днём');
@@ -933,11 +993,17 @@
                             <button class="delete-btn" data-id="${med.id}">Удалить</button>
                         </div>
                     `;
+                    
+                    // Добавляем обработчик клика по карточке лекарства
+                    medItem.addEventListener('click', handleMedicationItemClick);
+                    
                     currentMedicationsDiv.appendChild(medItem);
                 });
 
+                // Обработчики для кнопок (без изменений)
                 currentMedicationsDiv.querySelectorAll('.medication-item .delete-btn').forEach(button => {
                     button.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Останавливаем всплытие, чтобы не сработал клик по карточке
                         const medId = parseInt(e.target.dataset.id, 10);
                         removeMedication(medId);
                     });
@@ -945,9 +1011,17 @@
 
                 currentMedicationsDiv.querySelectorAll('.medication-item .edit-btn').forEach(button => {
                     button.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Останавливаем всплытие, чтобы не сработал клик по карточке
                         const medId = parseInt(e.target.dataset.id, 10);
                         editMedication(medId);
                     });
+                });
+                
+                // Закрываем активные карточки при клике вне списка лекарств
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('.medication-item')) {
+                        closeAllActiveMedicationItems();
+                    }
                 });
             }
 
@@ -1040,6 +1114,9 @@
                     medicationFormContent.classList.remove('hidden');
                     toggleIcon.textContent = '-';
                 }
+                
+                // Закрываем все открытые карточки после начала редактирования
+                closeAllActiveMedicationItems();
             }
 
             function resetForm() {
@@ -1070,6 +1147,9 @@
                     medicationFormContent.classList.add('hidden');
                     toggleIcon.textContent = '+';
                 }
+                
+                // Закрываем все открытые карточки после сброса формы
+                closeAllActiveMedicationItems();
             }
 
             submitMedicationBtn.addEventListener('click', () => {
@@ -1390,6 +1470,7 @@
                                 daySchedule[timeOfDay].forEach(med => {
                                     const medEntry = document.createElement('div');
                                     medEntry.classList.add('medication-entry', timeOfDay);
+									medEntry.style.padding = "5px"
                                     if (med.taken) {
                                         medEntry.classList.add('taken');
                                     }
@@ -1442,6 +1523,7 @@
                             daySchedule[timeOfDay].forEach(med => {
                                 const medEntry = document.createElement('div');
                                 medEntry.classList.add('medication-entry', timeOfDay);
+								medEntry.style.padding = "5px"
                                 if (med.taken) {
                                     medEntry.classList.add('taken');
                                 }
