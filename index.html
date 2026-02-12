@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💊</title>
+    <title>💊 Календарь лекарств</title>
     <style>
         * {
             box-sizing: border-box;
@@ -201,7 +201,6 @@
         }
         .medication-item .med-frequency {
             font-size: 0.9em;
-            /*color: #007bff;*/
             margin-top: 3px;
             font-weight: 500;
         }
@@ -516,7 +515,7 @@
             }
             .calendar-nav button {
                 width: 45%;
-                margin: 5px 0;
+                margin: 3px;
             }
             .calendar-grid {
                 gap: 2px;
@@ -541,7 +540,6 @@
                 font-size: 1.1em;
             }
 			.form-row {
-				/*flex-direction: column;*/
 				gap: 15px;
 			}
 			
@@ -794,15 +792,19 @@
 
             let medications = JSON.parse(localStorage.getItem('medications')) || [];
             let medicationSchedule = JSON.parse(localStorage.getItem('medicationSchedule')) || {};
+            
+            // 🔥 ИСПРАВЛЕНО: отдельное хранилище для отметок о приеме с привязкой ко времени суток
+            // Формат: takenMeds[dateKey][timeOfDay][medId] = true/false
+            let takenMeds = JSON.parse(localStorage.getItem('takenMeds')) || {};
+            
             let currentCalendarDate = new Date();
             let editingMedicationId = null;
             let currentViewMode = 'day';
 			
 			document.getElementById("frequencyN").addEventListener("input", function(e) {
-				const Sfx = getPlural(event.target.value, ['день','дня','дней']);
+				const Sfx = getPlural(e.target.value, ['день','дня','дней']);
 				document.getElementById('frequencySuff').textContent = Sfx;
-				}
-			);
+			});
 
             function toggleFrequencyNField() {
 				const frequencyInput = document.getElementById('frequency');
@@ -823,6 +825,11 @@
             function saveMedicationSchedule() {
                 localStorage.setItem('medicationSchedule', JSON.stringify(medicationSchedule));
             }
+            
+            // 🔥 ИСПРАВЛЕНО: сохранение отметок о приеме
+            function saveTakenMeds() {
+                localStorage.setItem('takenMeds', JSON.stringify(takenMeds));
+            }
 
             function getMedicationDates(startDate, count, frequencyType, frequencyN) {
                 const dates = [];
@@ -833,23 +840,19 @@
                 let dosesAdded = 0;
                 
                 while (dosesAdded < count) {
-                    // Проверяем, подходит ли текущая дата под периодичность
                     if (isDateValidForFrequency(currentDate, start, frequencyType, frequencyN, dosesAdded)) {
                         dates.push(new Date(currentDate));
                         dosesAdded++;
                     }
                     
-                    // Переходим к следующему дню
                     currentDate.setDate(currentDate.getDate() + 1);
                     
-                    // Защита от бесконечного цикла
                     if (dates.length > 1000) break;
                 }
                 
                 return dates;
             }
 
-            // ИСПРАВЛЕНО: Проверка, подходит ли дата для приема
             function isDateValidForFrequency(date, startDate, frequencyType, frequencyN, dosesAdded) {
                 const diffTime = date.getTime() - startDate.getTime();
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -901,23 +904,23 @@
 					let t = '';
 					if (times.length === 1) {
 						t = times[0];
-						} else if (times.length === 2) {
-							t = `${times[0]} и ${times[1]}`;
-							} else if (times.length >= 3) {
-								const last = times.pop();
-								t = `${times.join(', ')} и ${last}`;
-								}
+					} else if (times.length === 2) {
+						t = `${times[0]} и ${times[1]}`;
+					} else if (times.length >= 3) {
+						const last = times.pop();
+						t = `${times.join(', ')} и ${last}`;
+					}
 					
 					let comment = med.comment;
 					if (comment !== '') {
 						comment = comment.charAt(0).toUpperCase() + comment.slice(1);
 						if (comment.charAt(comment.length - 1) !== '.') comment += '.'; 
-						}
+					}
 
                     const d = new Date(med.startDate);
                     const frequencyDesc = getFrequencyDescription(med.frequencyType, med.frequencyN);
 					const dayNames = ['с воскресенья', 'с понедельника', 'со вторника', 'со среды', 'с четверга', 'с пятницы', 'с субботы'];
-					const weekday = dayNames[d.getDay()]
+					const weekday = dayNames[d.getDay()];
 
                     medItem.innerHTML = `
                         <div class="med-details">
@@ -968,6 +971,7 @@
                 medications = medications.filter(med => med.id !== medId);
                 saveMedications();
 
+                // Удаляем из расписания
                 for (const dateKey in medicationSchedule) {
                     if (medicationSchedule.hasOwnProperty(dateKey)) {
                         for (const timeOfDay in medicationSchedule[dateKey]) {
@@ -984,6 +988,27 @@
                         }
                     }
                 }
+                
+                // 🔥 ИСПРАВЛЕНО: удаляем отметки о приеме для этого лекарства для всех дат и времени суток
+                for (const dateKey in takenMeds) {
+                    if (takenMeds.hasOwnProperty(dateKey)) {
+                        for (const timeOfDay in takenMeds[dateKey]) {
+                            if (takenMeds[dateKey].hasOwnProperty(timeOfDay)) {
+                                delete takenMeds[dateKey][timeOfDay][medId];
+                                // Если после удаления во времени суток не осталось отметок, удаляем ключ времени
+                                if (Object.keys(takenMeds[dateKey][timeOfDay]).length === 0) {
+                                    delete takenMeds[dateKey][timeOfDay];
+                                }
+                            }
+                        }
+                        // Если после удаления в дате не осталось времени суток, удаляем дату
+                        if (Object.keys(takenMeds[dateKey]).length === 0) {
+                            delete takenMeds[dateKey];
+                        }
+                    }
+                }
+                saveTakenMeds();
+                
                 saveMedicationSchedule();
                 renderMedicationList();
                 updateCalendarDisplay();
@@ -1082,6 +1107,27 @@
                         };
                         medications[medIndex] = updatedMed;
                         removeMedicationFromSchedule(editingMedicationId);
+                        
+                        // 🔥 ИСПРАВЛЕНО: при редактировании лекарства удаляем старые отметки о приеме
+                        // полностью, так как лекарство может изменить свое расписание
+                        for (const dateKey in takenMeds) {
+                            if (takenMeds.hasOwnProperty(dateKey)) {
+                                for (const timeOfDay in takenMeds[dateKey]) {
+                                    if (takenMeds[dateKey].hasOwnProperty(timeOfDay)) {
+                                        delete takenMeds[dateKey][timeOfDay][editingMedicationId];
+                                        // Очищаем пустые структуры
+                                        if (Object.keys(takenMeds[dateKey][timeOfDay]).length === 0) {
+                                            delete takenMeds[dateKey][timeOfDay];
+                                        }
+                                    }
+                                }
+                                if (Object.keys(takenMeds[dateKey]).length === 0) {
+                                    delete takenMeds[dateKey];
+                                }
+                            }
+                        }
+                        saveTakenMeds();
+                        
                         addMedicationToSchedule(updatedMed);
                     }
                 } else {
@@ -1109,7 +1155,7 @@
             });
 
             function removeMedicationFromSchedule(medId) {
-                 for (const dateKey in medicationSchedule) {
+                for (const dateKey in medicationSchedule) {
                     if (medicationSchedule.hasOwnProperty(dateKey)) {
                         for (const timeOfDay in medicationSchedule[dateKey]) {
                             if (medicationSchedule[dateKey].hasOwnProperty(timeOfDay)) {
@@ -1127,7 +1173,7 @@
                 }
             }
             
-            // ИСПРАВЛЕНО: Добавление лекарства в расписание с учетом количества приемов
+            // 🔥 ИСПРАВЛЕНО: добавление лекарства с восстановлением отметок о приеме отдельно для каждого времени суток
             function addMedicationToSchedule(med) {
                 const dates = getMedicationDates(med.startDate, med.count, med.frequencyType, med.frequencyN);
                 
@@ -1138,19 +1184,41 @@
                         medicationSchedule[dateKey] = { morning: [], day: [], evening: [] };
                     }
                     
-                    const medToAdd = { id: med.id, name: med.name, dosage: med.dosage, taken: false };
-                    
+                    // Восстанавливаем отметку о приеме из takenMeds отдельно для каждого времени суток
                     if (med.morning) {
+                        const wasTaken = takenMeds[dateKey]?.['morning']?.[med.id] || false;
+                        const medToAdd = { 
+                            id: med.id, 
+                            name: med.name, 
+                            dosage: med.dosage, 
+                            taken: wasTaken 
+                        };
                         if (!medicationSchedule[dateKey].morning.some(item => item.id === med.id)) {
                             medicationSchedule[dateKey].morning.push({...medToAdd});
                         }
                     }
+                    
                     if (med.day) {
+                        const wasTaken = takenMeds[dateKey]?.['day']?.[med.id] || false;
+                        const medToAdd = { 
+                            id: med.id, 
+                            name: med.name, 
+                            dosage: med.dosage, 
+                            taken: wasTaken 
+                        };
                         if (!medicationSchedule[dateKey].day.some(item => item.id === med.id)) {
                             medicationSchedule[dateKey].day.push({...medToAdd});
                         }
                     }
+                    
                     if (med.evening) {
+                        const wasTaken = takenMeds[dateKey]?.['evening']?.[med.id] || false;
+                        const medToAdd = { 
+                            id: med.id, 
+                            name: med.name, 
+                            dosage: med.dosage, 
+                            taken: wasTaken 
+                        };
                         if (!medicationSchedule[dateKey].evening.some(item => item.id === med.id)) {
                             medicationSchedule[dateKey].evening.push({...medToAdd});
                         }
@@ -1169,7 +1237,6 @@
 
             function switchViewMode(mode) {
                 currentViewMode = mode;
-                
                 calendarViewModeSelect.value = mode;
                 
                 monthView.style.display = 'none';
@@ -1257,7 +1324,7 @@
                                 daySchedule[timeOfDay].forEach(med => {
                                     const medEntry = document.createElement('div');
                                     medEntry.classList.add('medication-entry', timeOfDay);
-                                    medEntry.style.display="block";
+                                    medEntry.style.display = "block";
                                     if (med.taken) {
                                         medEntry.classList.add('taken');
                                     }
@@ -1408,6 +1475,7 @@
                 }
             }
             
+            // 🔥 ИСПРАВЛЕНО: сохраняем отметки в отдельное хранилище с привязкой ко времени суток
             function addCheckboxListeners() {
                 document.querySelectorAll('.medication-entry').forEach(entry => {
                     entry.addEventListener('click', (e) => {
@@ -1432,6 +1500,7 @@
                         const timeOfDay = e.target.dataset.time;
                         const isChecked = e.target.checked;
 
+                        // Обновляем medicationSchedule
                         if (medicationSchedule[dateKey] && medicationSchedule[dateKey][timeOfDay]) {
                             const medItem = medicationSchedule[dateKey][timeOfDay].find(item => item.id === medId);
                             if (medItem) {
@@ -1440,6 +1509,16 @@
                                 e.target.closest('.medication-entry').classList.toggle('taken', isChecked);
                             }
                         }
+                        
+                        // 🔥 ИСПРАВЛЕНО: сохраняем отметку отдельно для каждого времени суток
+                        if (!takenMeds[dateKey]) {
+                            takenMeds[dateKey] = {};
+                        }
+                        if (!takenMeds[dateKey][timeOfDay]) {
+                            takenMeds[dateKey][timeOfDay] = {};
+                        }
+                        takenMeds[dateKey][timeOfDay][medId] = isChecked;
+                        saveTakenMeds();
                     });
                 });
             }
