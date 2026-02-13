@@ -211,24 +211,19 @@
             font-weight: 500;
         }
         
-        /* Скрываем кнопки по умолчанию */
         .medication-item .buttons-group {
             display: none;
             gap: 10px;
             width: 100%;
             justify-content: flex-end;
             margin-top: 10px;
-            
-            /* Анимация появления */
             animation: fadeIn 0.3s ease-in-out;
         }
         
-        /* Показываем кнопки при активном состоянии */
         .medication-item.active .buttons-group {
             display: flex;
         }
         
-        /* Анимация плавного появления */
         @keyframes fadeIn {
             0% {
                 opacity: 0;
@@ -823,8 +818,6 @@
             let medications = JSON.parse(localStorage.getItem('medications')) || [];
             let medicationSchedule = JSON.parse(localStorage.getItem('medicationSchedule')) || {};
             
-            // 🔥 ИСПРАВЛЕНО: отдельное хранилище для отметок о приеме с привязкой ко времени суток
-            // Формат: takenMeds[dateKey][timeOfDay][medId] = true/false
             let takenMeds = JSON.parse(localStorage.getItem('takenMeds')) || {};
             
             let currentCalendarDate = new Date();
@@ -835,6 +828,11 @@
 				const Sfx = getPlural(e.target.value, ['день','дня','дней']);
 				document.getElementById('frequencySuff').textContent = Sfx;
 			});
+			
+			window.addEventListener("orientationchange", function() {
+				if (window.orientation === 0 || window.orientation === 180) switchViewMode('day')
+				else switchViewMode('month');
+				}, false);	
 
             function toggleFrequencyNField() {
 				const frequencyInput = document.getElementById('frequency');
@@ -856,7 +854,6 @@
                 localStorage.setItem('medicationSchedule', JSON.stringify(medicationSchedule));
             }
             
-            // 🔥 ИСПРАВЛЕНО: сохранение отметок о приеме
             function saveTakenMeds() {
                 localStorage.setItem('takenMeds', JSON.stringify(takenMeds));
             }
@@ -917,30 +914,25 @@
                 }
             }
 
-            // Функция для закрытия всех открытых карточек лекарств
             function closeAllActiveMedicationItems() {
                 document.querySelectorAll('.medication-item.active').forEach(item => {
                     item.classList.remove('active');
                 });
             }
 
-            // Функция для обработки клика по лекарству
             function handleMedicationItemClick(e) {
-                // Если клик был по кнопке внутри карточки, не закрываем
                 if (e.target.closest('button')) {
                     return;
                 }
                 
                 const medItem = e.currentTarget;
                 
-                // Закрываем все другие открытые карточки
                 document.querySelectorAll('.medication-item.active').forEach(item => {
                     if (item !== medItem) {
                         item.classList.remove('active');
                     }
                 });
                 
-                // Переключаем класс active на текущей карточке
                 medItem.classList.toggle('active');
             }
 
@@ -994,16 +986,14 @@
                         </div>
                     `;
                     
-                    // Добавляем обработчик клика по карточке лекарства
                     medItem.addEventListener('click', handleMedicationItemClick);
                     
                     currentMedicationsDiv.appendChild(medItem);
                 });
 
-                // Обработчики для кнопок (без изменений)
                 currentMedicationsDiv.querySelectorAll('.medication-item .delete-btn').forEach(button => {
                     button.addEventListener('click', (e) => {
-                        e.stopPropagation(); // Останавливаем всплытие, чтобы не сработал клик по карточке
+                        e.stopPropagation();
                         const medId = parseInt(e.target.dataset.id, 10);
                         removeMedication(medId);
                     });
@@ -1011,13 +1001,12 @@
 
                 currentMedicationsDiv.querySelectorAll('.medication-item .edit-btn').forEach(button => {
                     button.addEventListener('click', (e) => {
-                        e.stopPropagation(); // Останавливаем всплытие, чтобы не сработал клик по карточке
+                        e.stopPropagation();
                         const medId = parseInt(e.target.dataset.id, 10);
                         editMedication(medId);
                     });
                 });
                 
-                // Закрываем активные карточки при клике вне списка лекарств
                 document.addEventListener('click', function(e) {
                     if (!e.target.closest('.medication-item')) {
                         closeAllActiveMedicationItems();
@@ -1045,7 +1034,6 @@
                 medications = medications.filter(med => med.id !== medId);
                 saveMedications();
 
-                // Удаляем из расписания
                 for (const dateKey in medicationSchedule) {
                     if (medicationSchedule.hasOwnProperty(dateKey)) {
                         for (const timeOfDay in medicationSchedule[dateKey]) {
@@ -1063,19 +1051,16 @@
                     }
                 }
                 
-                // 🔥 ИСПРАВЛЕНО: удаляем отметки о приеме для этого лекарства для всех дат и времени суток
                 for (const dateKey in takenMeds) {
                     if (takenMeds.hasOwnProperty(dateKey)) {
                         for (const timeOfDay in takenMeds[dateKey]) {
                             if (takenMeds[dateKey].hasOwnProperty(timeOfDay)) {
                                 delete takenMeds[dateKey][timeOfDay][medId];
-                                // Если после удаления во времени суток не осталось отметок, удаляем ключ времени
                                 if (Object.keys(takenMeds[dateKey][timeOfDay]).length === 0) {
                                     delete takenMeds[dateKey][timeOfDay];
                                 }
                             }
                         }
-                        // Если после удаления в дате не осталось времени суток, удаляем дату
                         if (Object.keys(takenMeds[dateKey]).length === 0) {
                             delete takenMeds[dateKey];
                         }
@@ -1115,7 +1100,6 @@
                     toggleIcon.textContent = '-';
                 }
                 
-                // Закрываем все открытые карточки после начала редактирования
                 closeAllActiveMedicationItems();
             }
 
@@ -1148,7 +1132,6 @@
                     toggleIcon.textContent = '+';
                 }
                 
-                // Закрываем все открытые карточки после сброса формы
                 closeAllActiveMedicationItems();
             }
 
@@ -1188,14 +1171,11 @@
                         medications[medIndex] = updatedMed;
                         removeMedicationFromSchedule(editingMedicationId);
                         
-                        // 🔥 ИСПРАВЛЕНО: при редактировании лекарства удаляем старые отметки о приеме
-                        // полностью, так как лекарство может изменить свое расписание
                         for (const dateKey in takenMeds) {
                             if (takenMeds.hasOwnProperty(dateKey)) {
                                 for (const timeOfDay in takenMeds[dateKey]) {
                                     if (takenMeds[dateKey].hasOwnProperty(timeOfDay)) {
                                         delete takenMeds[dateKey][timeOfDay][editingMedicationId];
-                                        // Очищаем пустые структуры
                                         if (Object.keys(takenMeds[dateKey][timeOfDay]).length === 0) {
                                             delete takenMeds[dateKey][timeOfDay];
                                         }
@@ -1253,7 +1233,6 @@
                 }
             }
             
-            // 🔥 ИСПРАВЛЕНО: добавление лекарства с восстановлением отметок о приеме отдельно для каждого времени суток
             function addMedicationToSchedule(med) {
                 const dates = getMedicationDates(med.startDate, med.count, med.frequencyType, med.frequencyN);
                 
@@ -1264,7 +1243,6 @@
                         medicationSchedule[dateKey] = { morning: [], day: [], evening: [] };
                     }
                     
-                    // Восстанавливаем отметку о приеме из takenMeds отдельно для каждого времени суток
                     if (med.morning) {
                         const wasTaken = takenMeds[dateKey]?.['morning']?.[med.id] || false;
                         const medToAdd = { 
@@ -1601,7 +1579,6 @@
                         const timeOfDay = e.target.dataset.time;
                         const isChecked = e.target.checked;
 
-                        // Обновляем medicationSchedule
                         if (medicationSchedule[dateKey] && medicationSchedule[dateKey][timeOfDay]) {
                             const medItem = medicationSchedule[dateKey][timeOfDay].find(item => item.id === medId);
                             if (medItem) {
@@ -1611,7 +1588,6 @@
                             }
                         }
                         
-                        // 🔥 ИСПРАВЛЕНО: сохраняем отметку отдельно для каждого времени суток
                         if (!takenMeds[dateKey]) {
                             takenMeds[dateKey] = {};
                         }
